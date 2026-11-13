@@ -1,0 +1,8 @@
+# build output
+*.exe
+!PawnIO_setup.exe
+*.new.exe
+
+# third-party binaries (shipped in Releases, not in git)
+*.dll
+PawnIO_setup.exe
