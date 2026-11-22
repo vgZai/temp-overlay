@@ -1,39 +1,38 @@
 # Temp
 
-A tiny always-on-top Windows overlay that shows live **CPU and GPU temperatures** side by side, updated once a second.
+A compact always-on-top Windows overlay that shows live **CPU and GPU temperatures** side by side, updated once a second.
 
-Built for a Ryzen 7 5700X3D + AMD GPU desktop, but it works with any CPU and AMD / NVIDIA / Intel GPU that [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) supports.
+Built for an AMD Ryzen (Family 17h/19h) + AMD Radeon desktop using direct hardware APIs with zero external DLL dependencies:
 
-- Sits in the bottom-right corner, dark title bar, no tray icon or settings
+- **CPU temperature:** direct `PawnIO` SMN reads via embedded `AMDFamily17.bin` (no polling of per-core MSRs or unused SMU sensors)
+- **CPU load:** Win32 `GetSystemTimes`
+- **GPU edge, hotspot, VRAM temp & load:** direct AMD ADL2 (`atiadlxx.dll` `ADL2_New_QueryPMLogData_Get`)
+- Sits compactly in the bottom-right corner, dark title bar, pauses automatically when minimized or workstation-locked
 - Big color-coded temperature per chip: green under 70 °C, yellow 70, orange 80, red 89+
-- Small detail line: CPU Tctl/package and load, GPU hotspot, VRAM temp, and load
+- Small detail line: CPU CCD1 temp and load, GPU hotspot, VRAM temp, and load
 
 ## Run it
 
 1. Download the zip from [Releases](../../releases), extract it anywhere.
-2. Double-click `CPUTemp.bat`. Windows asks for admin once.
+2. Double-click `CPUTemp.bat` (or launch via an elevated shortcut / Task Scheduler task). Windows asks for admin once, and silently installs **PawnIO** on first run if missing.
 3. Close the overlay with the X.
 
-Admin is required because Ryzen package temperature isn't readable from a normal user process. On first run the batch file silently installs **PawnIO**, the small signed sensor driver that LibreHardwareMonitor and Fan Control also use.
+Admin is required because Ryzen CPU SMN temperature registers aren't readable from a normal user process.
 
 ## Build from source
 
-The repo holds only the source. To build it yourself, put these next to `CPUTemp.cs`:
-
-- `LibreHardwareMonitorLib.dll` and its dependency DLLs from a [LibreHardwareMonitor release](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor/releases)
-- `PawnIO_setup.exe` from [PawnIO](https://pawnio.eu/)
-
-Then run `CPUTemp.bat`. If `CPUTemp.exe` doesn't exist it compiles one with the .NET Framework 4 compiler that ships with Windows (`csc.exe`), so no Visual Studio needed.
+`CPUTemp.exe` compiles directly from `CPUTemp.cs` + `AMDFamily17.bin` (included in the repo) using the .NET Framework 4 compiler that ships with Windows (`csc.exe`), so no Visual Studio or third-party DLLs are needed. Run `CPUTemp.bat` to build and launch automatically (place `PawnIO_setup.exe` from [PawnIO](https://pawnio.eu/) alongside it if deploying to a machine without PawnIO installed).
 
 ## Files
 
 | File | What it does |
 | --- | --- |
-| `CPUTemp.cs` | The whole app (WinForms) |
+| `CPUTemp.cs` | The whole app (WinForms + direct PawnIO / ADL2 / `GetSystemTimes` interop) |
+| `AMDFamily17.bin` | Signed PawnIO module embedded into `CPUTemp.exe` at compile time |
 | `CPUTemp.bat` | Elevates, installs PawnIO if missing, builds if needed, launches |
 | `app.manifest` | Requests admin, DPI-aware |
-| `CPUTemp.exe.config` | .NET runtime binding redirects |
+| `CPUTemp.exe.config` | .NET Framework 4.7.2 runtime config |
 
 ## License
 
-MIT. LibreHardwareMonitor is MPL-2.0; PawnIO has its own license.
+MIT. PawnIO and the signed `AMDFamily17.bin` module have their own respective licenses.
